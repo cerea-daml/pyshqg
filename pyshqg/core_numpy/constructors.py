@@ -8,6 +8,7 @@ from pyshqg.core_numpy.dissipation import QGEkmanDissipation, QGSelectiveDissipa
 from pyshqg.core_numpy.dissipation import QGThermalDissipation, QGDissipation
 from pyshqg.core_numpy.source import QGForcing
 from pyshqg.core_numpy.model import QGModel
+from pyshqg.core_numpy.integration import RungeKuttaModelIntegrator
 
 def construct_model(config):
     # spectral transformations
@@ -71,4 +72,23 @@ def construct_model(config):
 
     return model
 
+def construct_integrator(config, model):
+    if config['method'].lower() == 'rk4':
+        steps = [0, 0.5, 0.5, 1]
+        weights = [1, 2, 2, 1]
+    elif config['method'].lower() == 'rk2':
+        steps = [0, 0.5]
+        weights = [0, 1]
+    elif config['method'].lower() == 'abm':
+        steps = [0, 1]
+        weights = [0.5, 0.5]
+    else:
+        steps = [0]
+        weights = [1]
+    return RungeKuttaModelIntegrator(
+        model,
+        dt=config['dt'],
+        steps=steps,
+        weights=weights,
+    )
 

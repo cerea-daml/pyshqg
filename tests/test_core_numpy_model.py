@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
 
-from pyshqg.core_numpy.constructors import construct_model
 from pyshqg.preprocessing.reference_data import load_test_data
+from pyshqg.core_numpy.constructors import construct_model, construct_integrator
+from pyshqg.core_numpy.integration import RungeKuttaModelIntegrator
 
 def assert_close(
     x, 
@@ -55,6 +56,15 @@ def ds_test(config):
 @pytest.fixture
 def model(ds_test):
     return construct_model(ds_test.config)
+
+@pytest.fixture(params=['ee', 'abm', 'rk2', 'rk4'])
+def integrator_name(request):
+    return request.param
+
+@pytest.fixture
+def integrator(ds_test, model, integrator_name):
+    section = f'{integrator_name}_integration'
+    return construct_integrator(ds_test.config[section], model)
 
 def test_config(config):
     print(config)
@@ -210,6 +220,16 @@ def test_tendencies(ds_test, model):
     assert_close(
         spec_tendencies,
         ds_test.spec_tendencies.to_numpy(),
+        all_rtol=None,
+    )
+
+def test_integration(ds_test, integrator_name, integrator):
+    spec_integrated = integrator.forward(
+        ds_test.spec_q.to_numpy()
+    )
+    assert_close(
+        spec_integrated,
+        ds_test[f'spec_{integrator_name}'].to_numpy(),
         all_rtol=None,
     )
 
