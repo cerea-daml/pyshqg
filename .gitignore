@@ -1,0 +1,10 @@
+
+# vim tmp
+*.swp
+
+# python
+__pycache__/
+.ipynb_checkpoints/
+
+# personal tmp
+tmp/

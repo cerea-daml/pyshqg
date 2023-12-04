@@ -1,0 +1,177 @@
+{
+    "metadata": {
+        ".zattrs": {},
+        ".zgroup": {
+            "zarr_format": 2
+        },
+        "forcing/.zarray": {
+            "chunks": [
+                3,
+                64,
+                128
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                64,
+                128
+            ],
+            "zarr_format": 2
+        },
+        "forcing/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "level",
+                "lat",
+                "lon"
+            ]
+        },
+        "initial_q/.zarray": {
+            "chunks": [
+                3,
+                64,
+                128
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                64,
+                128
+            ],
+            "zarr_format": 2
+        },
+        "initial_q/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "level",
+                "lat",
+                "lon"
+            ]
+        },
+        "land_sea_mask/.zarray": {
+            "chunks": [
+                64,
+                128
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                64,
+                128
+            ],
+            "zarr_format": 2
+        },
+        "land_sea_mask/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "lat",
+                "lon"
+            ]
+        },
+        "lat/.zarray": {
+            "chunks": [
+                64
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                64
+            ],
+            "zarr_format": 2
+        },
+        "lat/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "lat"
+            ]
+        },
+        "lon/.zarray": {
+            "chunks": [
+                128
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                128
+            ],
+            "zarr_format": 2
+        },
+        "lon/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "lon"
+            ]
+        },
+        "orography/.zarray": {
+            "chunks": [
+                64,
+                128
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                64,
+                128
+            ],
+            "zarr_format": 2
+        },
+        "orography/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "lat",
+                "lon"
+            ]
+        }
+    },
+    "zarr_consolidated_format": 1
+}
