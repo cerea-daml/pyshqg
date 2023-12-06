@@ -3,7 +3,6 @@ import pytest
 
 from pyshqg.preprocessing.reference_data import load_test_data
 from pyshqg.core_numpy.constructors import construct_model, construct_integrator
-from pyshqg.core_numpy.integration import RungeKuttaModelIntegrator
 
 def assert_close(
     x, 
@@ -123,10 +122,10 @@ def test_dissipation_ekman(ds_test, model):
     spec_q = ds_test.spec_q.to_numpy()
     spec_psi = ds_test.spec_psi.to_numpy()
     gradients = dict(
-        d_q_d_theta=model.spectral_transformations.spec_to_grid_grad_theta(spec_q),
-        d_q_d_phi=model.spectral_transformations.spec_to_grid_grad_phi(spec_q),
-        d_psi_d_theta=model.spectral_transformations.spec_to_grid_grad_theta(spec_psi),
-        d_psi_d_phi=model.spectral_transformations.spec_to_grid_grad_phi(spec_psi),
+        dq_dtheta=model.spectral_transformations.spec_to_grid_grad_theta(spec_q),
+        dq_dphi=model.spectral_transformations.spec_to_grid_grad_phi(spec_q),
+        dpsi_dtheta=model.spectral_transformations.spec_to_grid_grad_theta(spec_psi),
+        dpsi_dphi=model.spectral_transformations.spec_to_grid_grad_phi(spec_psi),
     )
     dissipation_ekman = model.dissipation.ekman.compute_ekman_dissipation(zeta, gradients)
     assert_close(
@@ -159,14 +158,14 @@ def test_grid_dq_dt(ds_test, model):
     spec_q = ds_test.spec_q.to_numpy()
     spec_psi = ds_test.spec_psi.to_numpy()
     gradients = dict(
-        d_q_d_theta=model.spectral_transformations.spec_to_grid_grad_theta(spec_q),
-        d_q_d_phi=model.spectral_transformations.spec_to_grid_grad_phi(spec_q),
-        d_psi_d_theta=model.spectral_transformations.spec_to_grid_grad_theta(spec_psi),
-        d_psi_d_phi=model.spectral_transformations.spec_to_grid_grad_phi(spec_psi),
+        dq_dtheta=model.spectral_transformations.spec_to_grid_grad_theta(spec_q),
+        dq_dphi=model.spectral_transformations.spec_to_grid_grad_phi(spec_q),
+        dpsi_dtheta=model.spectral_transformations.spec_to_grid_grad_theta(spec_psi),
+        dpsi_dphi=model.spectral_transformations.spec_to_grid_grad_phi(spec_psi),
     )
     jacobian = (
-        gradients['d_q_d_phi'] * gradients['d_psi_d_theta'] - 
-        gradients['d_q_d_theta'] * gradients['d_psi_d_phi']
+        gradients['dq_dphi'] * gradients['dpsi_dtheta'] - 
+        gradients['dq_dtheta'] * gradients['dpsi_dphi']
     )
 
     # 2: forcing (replace by test data forcing)
@@ -214,21 +213,21 @@ def test_spec_dq_dt(ds_test, model):
     )
 
 def test_tendencies(ds_test, model):
-    spec_tendencies = model.compute_model_tendencies(
+    spec_tendencies = model.compute_model_tendencies(model.model_state(
         ds_test.spec_q.to_numpy()
-    )
+    ))
     assert_close(
-        spec_tendencies,
+        spec_tendencies.spec_q,
         ds_test.spec_tendencies.to_numpy(),
         all_rtol=None,
     )
 
-def test_integration(ds_test, integrator_name, integrator):
-    spec_integrated = integrator.forward(
+def test_integration(ds_test, model, integrator_name, integrator):
+    spec_integrated = integrator.forward(model.model_state(
         ds_test.spec_q.to_numpy()
-    )
+    ))
     assert_close(
-        spec_integrated,
+        spec_integrated.spec_q,
         ds_test[f'spec_{integrator_name}'].to_numpy(),
         all_rtol=None,
     )

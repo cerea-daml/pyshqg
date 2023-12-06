@@ -33,5 +33,4 @@ Install using pip:
     - make a few examples notebooks
     - write visualisation module
     - write tensorflow/pytorch/jax modules
-    - write time integration module
 

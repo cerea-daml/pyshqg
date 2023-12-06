@@ -21,21 +21,21 @@ class QGEkmanDissipation:
 
         # compute spatial gradients of friction field
         spec_mu = spectral_transformations.grid_to_spec(self.mu)
-        self.d_mu_d_phi = spectral_transformations.spec_to_grid_grad_phi(
+        self.dmu_dphi = spectral_transformations.spec_to_grid_grad_phi(
             spec_mu
         )
-        self.d_mu_d_theta = spectral_transformations.spec_to_grid_grad_theta(
+        self.dmu_dtheta = spectral_transformations.spec_to_grid_grad_theta(
             spec_mu
         )   
 
     def compute_ekman_dissipation(self, zeta, gradients):
         ekman_1 = zeta*self.mu
         ekman_2 = ( 
-            self.d_mu_d_theta * gradients['d_psi_d_theta'][..., -1, :, :] +
-            self.d_mu_d_phi * gradients['d_psi_d_phi'][..., -1, :, :]
+            self.dmu_dtheta * gradients['dpsi_dtheta'][..., -1, :, :] +
+            self.dmu_dphi * gradients['dpsi_dphi'][..., -1, :, :]
         )
         # TODO: replace with np.pad?
-        ekman = np.zeros_like(gradients['d_psi_d_theta'])
+        ekman = np.zeros_like(gradients['dpsi_dtheta'])
         ekman[..., -1, :, :] = ekman_1 + ekman_2
         return ekman
 
