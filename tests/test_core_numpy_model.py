@@ -121,22 +121,26 @@ def test_dissipation_ekman(ds_test, model):
     zeta = ds_test.zeta.to_numpy()
     spec_q = ds_test.spec_q.to_numpy()
     spec_psi = ds_test.spec_psi.to_numpy()
-    gradients = dict(
-        dq_dtheta=model.spectral_transformations.spec_to_grid_grad_theta(spec_q),
-        dq_dphi=model.spectral_transformations.spec_to_grid_grad_phi(spec_q),
-        dpsi_dtheta=model.spectral_transformations.spec_to_grid_grad_theta(spec_psi),
-        dpsi_dphi=model.spectral_transformations.spec_to_grid_grad_phi(spec_psi),
-    )
-    dissipation_ekman = model.dissipation.ekman.compute_ekman_dissipation(zeta, gradients)
+    dq_dtheta = model.spectral_transformations.spec_to_grid_grad_theta(spec_q)
+    dq_dphi = model.spectral_transformations.spec_to_grid_grad_phi(spec_q)
+    dpsi_dtheta = model.spectral_transformations.spec_to_grid_grad_theta(spec_psi)
+    dpsi_dphi = model.spectral_transformations.spec_to_grid_grad_phi(spec_psi)
+    dissipation_ekman = model.dissipation.ekman.compute_ekman_dissipation(dict(
+        zeta=zeta, 
+        dq_dtheta=dq_dtheta,
+        dq_dphi=dq_dphi,
+        dpsi_dtheta=dpsi_dtheta,
+        dpsi_dphi=dpsi_dphi,
+    ))
     assert_close(
         dissipation_ekman,
         ds_test.dissip_ekman.to_numpy(),
     )
 
 def test_dissipation_selective(ds_test, model):
-    spec_dissipation_selective = model.dissipation.selective.compute_selective_dissipation(
-        ds_test.spec_total_q.to_numpy()
-    )
+    spec_dissipation_selective = model.dissipation.selective.compute_selective_dissipation(dict(
+        spec_total_q=ds_test.spec_total_q.to_numpy(),
+    ))
     assert_close(
         spec_dissipation_selective,
         ds_test.spec_dissip_sel.to_numpy(),
@@ -144,9 +148,9 @@ def test_dissipation_selective(ds_test, model):
 
 # this test accuracy is not very good :(
 def test_dissipation_thermal(ds_test, model):
-    spec_dissipation_thermal = model.dissipation.thermal.compute_thermal_dissipation(
-        ds_test.spec_psi.to_numpy()
-    )
+    spec_dissipation_thermal = model.dissipation.thermal.compute_thermal_dissipation(dict(
+        spec_psi=ds_test.spec_psi.to_numpy(),
+    ))
     assert_close(
         spec_dissipation_thermal,
         ds_test.spec_dissip_therm.to_numpy(),
@@ -155,17 +159,18 @@ def test_dissipation_thermal(ds_test, model):
 
 def test_grid_dq_dt(ds_test, model):
     # 1: jacobian
-    spec_q = ds_test.spec_q.to_numpy()
-    spec_psi = ds_test.spec_psi.to_numpy()
-    gradients = dict(
-        dq_dtheta=model.spectral_transformations.spec_to_grid_grad_theta(spec_q),
-        dq_dphi=model.spectral_transformations.spec_to_grid_grad_phi(spec_q),
-        dpsi_dtheta=model.spectral_transformations.spec_to_grid_grad_theta(spec_psi),
-        dpsi_dphi=model.spectral_transformations.spec_to_grid_grad_phi(spec_psi),
+    state = dict(
+        spec_q=ds_test.spec_q.to_numpy(),
+        spec_psi=ds_test.spec_psi.to_numpy(),
+        zeta=ds_test.zeta.to_numpy(),
     )
+    state['dq_dtheta'] = model.spectral_transformations.spec_to_grid_grad_theta(state['spec_q'])
+    state['dq_dphi'] = model.spectral_transformations.spec_to_grid_grad_phi(state['spec_q'])
+    state['dpsi_dtheta'] = model.spectral_transformations.spec_to_grid_grad_theta(state['spec_psi'])
+    state['dpsi_dphi'] = model.spectral_transformations.spec_to_grid_grad_phi(state['spec_psi'])
     jacobian = (
-        gradients['dq_dphi'] * gradients['dpsi_dtheta'] - 
-        gradients['dq_dtheta'] * gradients['dpsi_dphi']
+        state['dq_dphi'] * state['dpsi_dtheta'] - 
+        state['dq_dtheta'] * state['dpsi_dphi']
     )
 
     # 2: forcing (replace by test data forcing)
@@ -174,9 +179,7 @@ def test_grid_dq_dt(ds_test, model):
     forcing = ds_test.forcing.to_numpy()
 
     # 3: Ekman dissipation
-    zeta = ds_test.zeta.to_numpy()
-    spec_psi = ds_test.spec_psi.to_numpy()
-    dissipation_ekman = model.dissipation.ekman.compute_ekman_dissipation(zeta, gradients)
+    dissipation_ekman = model.dissipation.ekman.compute_ekman_dissipation(state)
     
     # aggregate
     grid_dq_dt = jacobian + forcing - dissipation_ekman
@@ -195,14 +198,14 @@ def test_grid_to_spec_dq_dt(ds_test, model):
 
 def test_spec_dq_dt(ds_test, model):
     # 1: selective dissipation
-    spec_dissipation_selective = model.dissipation.selective.compute_selective_dissipation(
-        ds_test.spec_total_q.to_numpy()
-    )
+    spec_dissipation_selective = model.dissipation.selective.compute_selective_dissipation(dict(
+        spec_total_q=ds_test.spec_total_q.to_numpy(),
+    ))
 
     # 2: thermal dissipation (accuracy is low...)
-    spec_dissipation_thermal = model.dissipation.thermal.compute_thermal_dissipation(
-        ds_test.spec_psi.to_numpy()
-    )
+    spec_dissipation_thermal = model.dissipation.thermal.compute_thermal_dissipation(dict(
+        spec_psi=ds_test.spec_psi.to_numpy(),
+    ))
 
     # aggregate
     spec_dq_dt = -spec_dissipation_selective - spec_dissipation_thermal
@@ -217,7 +220,7 @@ def test_tendencies(ds_test, model):
         ds_test.spec_q.to_numpy()
     ))
     assert_close(
-        spec_tendencies.spec_q,
+        spec_tendencies['spec_q'],
         ds_test.spec_tendencies.to_numpy(),
         all_rtol=None,
     )
@@ -227,7 +230,7 @@ def test_integration(ds_test, model, integrator_name, integrator):
         ds_test.spec_q.to_numpy()
     ))
     assert_close(
-        spec_integrated.spec_q,
+        spec_integrated['spec_q'],
         ds_test[f'spec_{integrator_name}'].to_numpy(),
         all_rtol=None,
     )

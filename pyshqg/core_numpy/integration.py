@@ -25,13 +25,25 @@ class RungeKuttaModelIntegrator:
         self,
         state,
     ):
-        current_tendencies = self.model.compute_model_tendencies(state)
-        averaged_tendencies = self.weights[0] * current_tendencies
-        for (w, step) in zip(self.weights[1:], self.steps[1:]):
-            current_state = state + current_tendencies * step
+        averaged_tendencies = self.model.model_state(0)
+        current_tendencies = self.model.model_state(0)
+        for (w, step) in zip(self.weights, self.steps):
+            current_state = self.model.apply_euler_step(
+                state,
+                current_tendencies,
+                step,
+            )
             current_tendencies = self.model.compute_model_tendencies(current_state)
-            averaged_tendencies += w * current_tendencies
-        return state + averaged_tendencies * self.dt
+            averaged_tendencies = self.model.apply_euler_step(
+                averaged_tendencies,
+                current_tendencies,
+                w,
+            )
+        return self.model.apply_euler_step(
+            state,
+            averaged_tendencies,
+            self.dt,
+        )
 
     def run(
         self,
@@ -41,6 +53,7 @@ class RungeKuttaModelIntegrator:
         num_steps_per_snapshot,
         variables,
         use_tqdm=True,
+        output='xarray',
     ):
         if use_tqdm:
             import tqdm.auto as tqdm
@@ -53,10 +66,14 @@ class RungeKuttaModelIntegrator:
         time = t_start + np.arange(num_snapshots+1) * self.dt * num_steps_per_snapshot
         trajectory = self.model.model_trajectory(variables)
         for t in main_range:
-            current_state = state
+            state = trajectory.append(time[t], state)
             for _ in range(num_steps_per_snapshot):
                 state = self.forward(state)
-            trajectory.append(time[t], current_state)
-        trajectory.append(time[-1], state)
-        return trajectory.to_xarray()
+        state = trajectory.append(time[-1], state)
+        if output == 'numpy':
+            return trajectory.to_numpy()
+        elif output == 'xarray':
+            return trajectory.to_xarray()
+        else:
+            return trajectory
 

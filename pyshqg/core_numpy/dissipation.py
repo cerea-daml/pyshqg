@@ -28,14 +28,14 @@ class QGEkmanDissipation:
             spec_mu
         )   
 
-    def compute_ekman_dissipation(self, zeta, gradients):
-        ekman_1 = zeta*self.mu
+    def compute_ekman_dissipation(self, state):
+        ekman_1 = state['zeta']*self.mu
         ekman_2 = ( 
-            self.dmu_dtheta * gradients['dpsi_dtheta'][..., -1, :, :] +
-            self.dmu_dphi * gradients['dpsi_dphi'][..., -1, :, :]
+            self.dmu_dtheta * state['dpsi_dtheta'][..., -1, :, :] +
+            self.dmu_dphi * state['dpsi_dphi'][..., -1, :, :]
         )
         # TODO: replace with np.pad?
-        ekman = np.zeros_like(gradients['dpsi_dtheta'])
+        ekman = np.zeros_like(state['dpsi_dtheta'])
         ekman[..., -1, :, :] = ekman_1 + ekman_2
         return ekman
 
@@ -54,10 +54,10 @@ class QGSelectiveDissipation:
             T * (T+1)
         ))**4 / tau
 
-    def compute_selective_dissipation(self, spec_total_q):
+    def compute_selective_dissipation(self, state):
         return np.einsum(
             '...lm,l->...lm',
-            spec_total_q,
+            state['spec_total_q'],
             self.spectrum,
         )
 
@@ -72,10 +72,10 @@ class QGThermalDissipation:
             scaling=1/tau
         )
 
-    def compute_thermal_dissipation(self, spec_psi):
+    def compute_thermal_dissipation(self, state):
         return np.einsum(
             '...jklm,ij->...iklm',
-            spec_psi,
+            state['spec_psi'],
             self.thermal_coupling,
         )
 
