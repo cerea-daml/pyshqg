@@ -10,11 +10,12 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-import os
-import sys
+#import os
+#import sys
 import tomli
 
-sys.path.insert(0, os.path.abspath('.'))
+import pyshqg
+#sys.path.insert(0, os.path.abspath('.'))
 
 
 # -- Project information -----------------------------------------------------
@@ -39,11 +40,42 @@ release = version
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.mathjax',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.coverage',
     # used to include .md files
     'm2r2',
     # theme
     'sphinx_rtd_theme',
 ]
+
+autoclass_content = 'class'
+autodoc_member_order = 'bysource'
+autodoc_default_flags = {
+    'members': '',
+    'undoc-members': 'code,error_template',
+    'exclude-members': '__dict__,__weakref__',
+}
+source_suffix = ['.rst', '.md']
+language = 'en'
+pygments_style = 'sphinx'
+add_module_names = True
+autodoc_default_options = {
+    'show-inheritance': False,
+}
+# Napoleon settings
+napoleon_google_docstring = True
+napoleon_numpy_docstring = True
+napoleon_include_init_with_doc = True
+napoleon_include_private_with_doc = True
+napoleon_include_special_with_doc = True
+napoleon_use_admonition_for_examples = False
+napoleon_use_admonition_for_notes = False
+napoleon_use_admonition_for_references = False
+napoleon_use_ivar = False
+napoleon_use_param = True
+napoleon_use_rtype = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -52,9 +84,6 @@ templates_path = ['_templates']
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
-source_suffix = ['.rst', '.md']
-language = 'en'
 
 # -- Options for HTML output -------------------------------------------------
 

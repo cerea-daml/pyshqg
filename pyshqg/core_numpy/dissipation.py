@@ -222,7 +222,7 @@ class QGThermalDissipation:
 class QGDissipation: 
     r"""Container class for all dissipation processes.
 
-    Attributes
+    Parameters
     ----------
     ekman: pyshqg.core_numpy.dissipation.QGEkmanDissipation
         The Ekman dissipation object.

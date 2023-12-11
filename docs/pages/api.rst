@@ -3,5 +3,9 @@
 API
 ===
 
-Here should come a description of the api.
+.. toctree::
+   :maxdepth: 4
+
+   pyshqg.core_numpy
+   pyshqg.preprocessing
 

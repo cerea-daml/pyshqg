@@ -132,7 +132,7 @@ class QGModel:
     The main method of this class is `compute_model_tendencies`,
     which can be used to compute the tendencies of the QG model.
 
-    Attributes
+    Parameters
     ----------
     spectral_transformations : pyshqg.core_numpy.spectral_transformations.SpectralTransformations
         Object encapsulating the spectral transformations.

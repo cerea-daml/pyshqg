@@ -13,7 +13,7 @@ class Orography:
     pre-processing functions related to
     the orography.
 
-    Attributes
+    Parameters
     ----------
     land_sea_mask : np.ndarray, shape (Nlat, Nlon)
         The land/sea mask.

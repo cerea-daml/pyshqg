@@ -6,7 +6,7 @@ import dataclasses
 class QGForcing:
     r"""Class for a standard, constant forcing.
 
-    Attributes
+    Parameters
     ----------
     forcing : np.ndarray, shape (Nlevel, Nlat, Nlon)
         Forcing coefficients in grid space.
