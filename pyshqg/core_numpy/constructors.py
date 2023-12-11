@@ -1,3 +1,5 @@
+r"""Submodule dedicated to constructors."""
+
 from pyshqg.preprocessing.reference_data import load_reference_data, interpolate_data
 from pyshqg.preprocessing.reference_data import load_test_data
 from pyshqg.preprocessing.vertical_parametrisation import VerticalParametrisation
@@ -11,6 +13,30 @@ from pyshqg.core_numpy.model import QGModel
 from pyshqg.core_numpy.integration import RungeKuttaModelIntegrator
 
 def construct_model(config):
+    r"""Constructs a model from a given configuration.
+
+    In practice, this function constructs:
+    1. the spectral transformations (section 'spectral_transformations');
+    2. the vertical parametrisation (section 'vertical_parametrisation');
+    3. the orography;
+    4. the Poisson solver (section 'poisson_solver');
+    5. the dissipation processes (section 'dissipation');
+    6. the forcing processes (section 'forcing').
+    The orography and forcing processes require input data,
+    which is taken from the reference dataset as specified in section
+    'reference_data', and then interpolated as specified in section
+    'data_interpolation'.
+
+    Parameters
+    ----------
+    config : dict
+        The configuration.
+
+    Returns
+    -------
+    model : pyshqg.core_numpy.model.QGModel
+        The constructed model.
+    """
     # spectral transformations
     spectral_transformations = SpectralTransformations(**config['spectral_transformations'])
 
@@ -73,22 +99,23 @@ def construct_model(config):
     return model
 
 def construct_integrator(config, model):
-    if config['method'].lower() == 'rk4':
-        steps = [0, 0.5, 0.5, 1]
-        weights = [1, 2, 2, 1]
-    elif config['method'].lower() == 'rk2':
-        steps = [0, 0.5]
-        weights = [0, 1]
-    elif config['method'].lower() == 'abm':
-        steps = [0, 1]
-        weights = [0.5, 0.5]
-    else:
-        steps = [0]
-        weights = [1]
+    r"""Constructs a Runge--Kutta integrator for a given model.
+
+    Parameters
+    ----------
+    config : dict
+        The integrator parametrisation.
+    model : pyshqg.core_numpy.model.QGModel
+        The model to integrate.
+
+    Returns
+    -------
+    integrator : pyshqg.core_numpy.integration.RungeKuttaModelIntegrator
+        The constructed integrator.
+    """
     return RungeKuttaModelIntegrator(
         model,
         dt=config['dt'],
-        steps=steps,
-        weights=weights,
+        method=config['method'],
     )
 

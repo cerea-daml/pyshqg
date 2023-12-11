@@ -1,26 +1,84 @@
+r"""Submodule dedicated to the QG model."""
+
+import dataclasses
+
 import numpy as np
 import xarray as xr
 
-QG_CORE_DIMENSIONS = dict(
-    spec_q=['level', 'c', 'l', 'm'],
-    spec_total_q=['level', 'c', 'l', 'm'],
-    spec_psi=['level', 'c', 'l', 'm'],
-    zeta=['lat', 'lon'],
-    q=['level', 'lat', 'lon'],
-    psi=['level', 'lat', 'lon'],
-)
 
 class QGModelTrajectory:
+    r"""Container class for a QG model trajectory.
+
+    The purpose of this class is to make a container class
+    for a model trajectory. In practice, for each recorded
+    variable, a list is created. Each time a snapshot is 
+    appended to the trajectory, using the `append` method,
+    all the recorded variables are appended to the appropriate lists. 
+
+    At any time, the trajectory can be exported to 'numpy' format
+    (i.e. as a dictionnary of `str` to `numpy.ndarray`, with one entry 
+    for each recorded variable) using the `to_numpy` method 
+    or to 'xarray' format (i.e. as an `xarray.Dataset`, with one 
+    `xarray.DataArray` for each recorded variable) using the
+    `to_xarray` method.
+
+    Attributes
+    ----------
+    core_dimensions : dict of str to list of str
+        Mapping from potential variable name to list of core dimension names.
+    model : pyshqg.core_numpy.model.QGModel
+        Reference to the QG model instance.
+    time : list of float
+        List of the snapshot times.
+    variables : dict of str to list of numpy.ndarray
+        Mapping from recorded variable name to list of snapshots.
+    """
 
     def __init__(self, model, variables):
+        r"""Constructor for the QG model trajectory.
+
+        Parameters
+        ----------
+        model : pyshqg.core_numpy.model.QGModel
+            Reference to the QG model instance.
+        variables : list of str
+            List of variables to record.
+        """
+        self.core_dimensions = dict(
+            spec_q=['level', 'c', 'l', 'm'],
+            spec_total_q=['level', 'c', 'l', 'm'],
+            spec_psi=['level', 'c', 'l', 'm'],
+            zeta=['lat', 'lon'],
+            q=['level', 'lat', 'lon'],
+            psi=['level', 'lat', 'lon'],
+        )
         self.model = model
         self.time = []
         self.variables = {
             variable: []
-            for variable in QG_CORE_DIMENSIONS if variable in variables
+            for variable in self.core_dimensions if variable in variables
         }
 
     def append(self, time, state):
+        r"""Creates a snapshot and adds it to the trajectory.
+
+        If some variables to record are not yet available,
+        they are computed and added to the state.
+        The present method returns the state, so that the added
+        variables can be used later on.
+
+        Parameters
+        ----------
+        time : float
+            Snapshot time.
+        state : dict of str to numpy.ndarray
+            QG model state to record.
+
+        Returns
+        -------
+        state : dict of str to numpy.ndarray
+            Recorded QG model state.
+        """
         self.time.append(time)
         state = self.model.compute_dependent_variables(
             state,
@@ -31,23 +89,26 @@ class QGModelTrajectory:
         return state
 
     def to_numpy(self):
+        r"""Exports the trajectory to 'numpy' format."""
         return {
             variable: np.array(self.variables[variable])
             for variable in self.variables
         }
 
-    def num_batch_dimensions(self):
-        for variable in QG_CORE_DIMENSIONS:
+    def _num_batch_dimensions(self):
+        r"""Computes the number of batch dimensions."""
+        for variable in self.core_dimensions:
             if variable in self.variables:
                 if len(self.variables[variable]) == 0:
                     return 0
-                return len(self.variables[variable][0].shape) - len(QG_CORE_DIMENSIONS[variable])
+                return len(self.variables[variable][0].shape) - len(self.core_dimensions[variable])
 
     def to_xarray(self):
-        batch_dimensions = [f'batch_{i}' for i in range(self.num_batch_dimensions())]
+        r"""Exports the trajectory to 'xarray' format."""
+        batch_dimensions = [f'batch_{i}' for i in range(self._num_batch_dimensions())]
         data_vars = {
             variable: (
-                ['time']+batch_dimensions+QG_CORE_DIMENSIONS[variable],
+                ['time']+batch_dimensions+self.core_dimensions[variable],
                 np.array(self.variables[variable])
             ) for variable in self.variables
         }
@@ -61,28 +122,93 @@ class QGModelTrajectory:
             coords=coords,
         )
 
-class QGModel:
 
-    def __init__(
-        self,
-        spectral_transformations,
-        poisson_solver,
-        dissipation,
-        forcing,
-    ):
-        self.spectral_transformations = spectral_transformations
-        self.poisson_solver = poisson_solver
-        self.dissipation = dissipation
-        self.forcing = forcing
+@dataclasses.dataclass
+class QGModel:
+    r"""QG model class.
+
+    The purpose of this class is to gather all
+    the necessary pieces to implement the QG model.
+    The main method of this class is `compute_model_tendencies`,
+    which can be used to compute the tendencies of the QG model.
+
+    Attributes
+    ----------
+    spectral_transformations : pyshqg.core_numpy.spectral_transformations.SpectralTransformations
+        Object encapsulating the spectral transformations.
+    poisson_solver : pyshqg.core_numpy.poisson.QGPoissonSolver
+        Object encapsulating the Poisson solver.
+    dissipation : pyshqg.core_numpy.dissipation.QGDissipation
+        Object encapsulating the dissipation processes.
+    forcing : pyshqg.core_numpy.source.QGForcing
+        Object encapsulating the forcing therm.
+    """
+    spectral_transformations: 'pyshqg.core_numpy.spectral_transformations.SpectralTransformations'
+    poisson_solver: 'pyshqg.core_numpy.poisson.QGPoissonSolver'
+    dissipation: 'pyshqg.core_numpy.dissipation.QGDissipation'
+    forcing: 'pyshqg.core_numpy.source.QGForcing'
 
     @staticmethod
     def model_state(spec_q):
+        r"""Constructs a model state.
+
+        Parameters
+        ----------
+        spec_q : numpy.ndarray, shape (..., 2, T+1, T+1)
+            Relative vorticity in spectral space $\hat{q}$.
+
+        Returns
+        -------
+        state : dict of str to numpy.ndarray
+            QG model state as dictionary of variables.
+        """
         return dict(spec_q=spec_q)
 
     def model_trajectory(self, variables):
+        r"""Constructs and initialises a model trajectory.
+
+        Parameters
+        ----------
+        variables : list of str
+            List of variables to record.
+
+        Returns
+        -------
+        trajectory : pyshqg.core_numpy.model.QGModelTrajectory
+            Initialised trajectory object.
+        """
         return QGModelTrajectory(self, variables)
 
     def compute_dependent_variable(self, state, variable):
+        r"""Computes a dependent variable.
+
+        The requested variable is computed and added
+        to the state to be used later on. If the requested
+        variable require another variable which is unavailable,
+        the latter unavailable variable will be computed first.
+        Also note that if the requested variable is 
+        already available, then nothing happens.
+
+        The present method currently supports the following variables:
+        - the total vorticity in spectral space $\hat{q}^{\mathsf{t}}$;
+        - the stream function in spectral space $\hat{\psi}$;
+        - the drag in real space $\zeta$;
+        - the spatial gradient of $\psi$ and $q$ in real space;
+        - the relative vorticity in real space $q$;
+        - the stream function in real space $\psi$.
+
+        Parameters
+        ----------
+        state : dict of str to numpy.ndarray
+            Current QG model state.
+        variable : str
+            Requested variable.
+
+        Returns
+        -------
+        state : dict of str to numpy.ndarray
+            Updated QG model state.
+        """
 
         if variable in state:
             return state
@@ -129,11 +255,46 @@ class QGModel:
             return state | dict(psi=psi)
 
     def compute_dependent_variables(self, state, variables):
+        r"""Computes a list of dependent variable.
+
+        The present method uses the `compute_dependent_variable`
+        method to compute each requested variable in the list.
+
+        Parameters
+        ----------
+        state : dict of str to numpy.ndarray
+            Current QG model state.
+        variables : list of str
+            List of requested variable.
+
+        Returns
+        -------
+        state : dict of str to numpy.ndarray
+            Updated QG model state.
+        """
         for variable in variables:
             state = self.compute_dependent_variable(state, variable)
         return state
 
     def compute_model_tendencies(self, state):
+        r"""Computes the model tendencies.
+
+        The model tendencies are computed only for the
+        control variable of the QG model, i.e. the relative
+        vorticity in spectral space $\hat{q}$. They are
+        encapsulated in a model state dictionnary before
+        they are returned.
+
+        Parameters
+        ----------
+        state : dict of str to numpy.ndarray
+            Current QG model state.
+
+        Returns
+        -------
+        tendencies : dict of str to numpy.ndarray
+            Tendencies associated to the QG model state.
+        """
         # compute dependent variables
         state = self.compute_dependent_variables(state, (
             'spec_total_q',
@@ -155,13 +316,21 @@ class QGModel:
         forcing = self.forcing.compute_forcing()
 
         # compute Ekman dissipation
-        dissipation_ekman = self.dissipation.ekman.compute_ekman_dissipation(state)
+        dissipation_ekman = self.dissipation.ekman.compute_ekman_dissipation(
+            state['zeta'],
+            state['dpsi_dtheta'],
+            state['dpsi_dphi'],
+        )
 
         # compute selective dissipation
-        spec_dissipation_selective = self.dissipation.selective.compute_selective_dissipation(state)
+        spec_dissipation_selective = self.dissipation.selective.compute_selective_dissipation(
+            state['spec_total_q'],
+        )
 
         # compute thermal dissipation
-        spec_dissipation_thermal = self.dissipation.thermal.compute_thermal_dissipation(state)
+        spec_dissipation_thermal = self.dissipation.thermal.compute_thermal_dissipation(
+            state['spec_psi'],
+        )
 
         # aggregate contributions in grid space
         tendencies = jacobian + forcing - dissipation_ekman
@@ -174,6 +343,33 @@ class QGModel:
         return self.model_state(spec_tendencies)
 
     def apply_euler_step(self, state, tendencies, step):
+        r"""Applies an explicit Euler integration step.
+
+        The integration step is applied only to the
+        control variable of the QG model, i.e. the relative
+        vorticity in spectral space $\hat{q}$. 
+
+        Parameters
+        ----------
+        state : dict of str to numpy.ndarray
+            Current QG model state.
+        tendencies : dict of str to numpy.ndarray
+            QG model tendencies to apply.
+        step : float
+            Step size.
+
+        Returns
+        -------
+        state : dict of str to numpy.ndarray
+            Updated QG model state.
+
+        Notes
+        -----
+        This algorithmic step is at the core of every
+        explicit integration scheme, e.g. the Runge--Kutta
+        schemes as used in 
+        `pyshqg.core_numpy.integration.RungeKuttaModelIntegrator`.
+        """
         return self.model_state(
             state['spec_q'] + step * tendencies['spec_q']
         )

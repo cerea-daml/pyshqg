@@ -1,10 +1,28 @@
-class QGForcing:
+r"""Submodule dedicated to sources."""
 
-    def __init__(
-        self,
-        forcing,
-    ):
-        self.forcing = forcing
+import dataclasses
+
+@dataclasses.dataclass
+class QGForcing:
+    r"""Class for a standard, constant forcing.
+
+    Attributes
+    ----------
+    forcing : np.ndarray, shape (Nlevel, Nlat, Nlon)
+        Forcing coefficients in grid space.
+    """
+    forcing : 'numpy.ndarray'
 
     def compute_forcing(self):
+        r"""Computes the forcing
+
+        Note that the forcing coefficients have been
+        pre-computed in the grid.
+
+        Returns
+        -------
+        forcing : np.ndarray, shape (Nlevel, Nlat, Nlon)
+            Forcing coefficients in grid space.
+        """
         return self.forcing
+
