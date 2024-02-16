@@ -64,6 +64,7 @@ add_module_names = True
 autodoc_default_options = {
     'show-inheritance': False,
 }
+coverage_show_missing_items = True
 # Napoleon settings
 napoleon_google_docstring = True
 napoleon_numpy_docstring = True
