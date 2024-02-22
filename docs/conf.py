@@ -14,8 +14,8 @@
 #import sys
 import tomli
 
-import pyshqg
-#sys.path.insert(0, os.path.abspath('.'))
+#import pyshqg
+sys.path.insert(0, os.path.abspath('.'))
 
 
 # -- Project information -----------------------------------------------------
