@@ -1,3 +1,4 @@
 sphinx==7.1.2
 sphinx-rtd-theme
 tomli
+m2r2
