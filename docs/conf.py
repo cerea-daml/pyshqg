@@ -48,6 +48,9 @@ extensions = [
     'm2r2',
     # theme
     'sphinx_rtd_theme',
+    # no have notebooks
+    'nbsphinx',
+    'sphinx_gallery.load_style',
 ]
 
 autodoc_mock_imports = [

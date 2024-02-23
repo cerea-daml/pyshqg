@@ -3,5 +3,6 @@
 Examples
 ========
 
-Here should come several examples.
+.. nbgallery::
+   notebooks/basic_example
 
