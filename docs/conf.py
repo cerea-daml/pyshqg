@@ -15,7 +15,7 @@ import sys
 import tomli
 
 #import pyshqg
-sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('..'))
 
 
 # -- Project information -----------------------------------------------------
@@ -48,6 +48,15 @@ extensions = [
     'm2r2',
     # theme
     'sphinx_rtd_theme',
+]
+
+autodoc_mock_imports = [
+    'numpy',
+    'xarray',
+    'pyshtools',
+    'tensorflow',
+    'tqdm',
+    'scipy',
 ]
 
 autoclass_content = 'class'
