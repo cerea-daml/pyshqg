@@ -26,6 +26,10 @@ Install using pip:
     >>> )))
     >>> assert rms_diff < 1e-6 * rms_ref
 
+## Aknowledgements
+
+This python package is based on an original software produced at LMD.
+
 ## Todo-list
 
     - write docstrings
