@@ -1,4 +1,7 @@
-# 2019-pyshqg
+
+![Animated example](http://cerea.enpc.fr/HomePages/farchia/pyshqg-map.gif)
+
+# pyshqg
 
 `pyshqg` is a python solver for the Marshal and Molteni (1993) quasi-geostrophic model.
 
@@ -37,4 +40,11 @@ This python package is based on an original software produced at LMD.
     - make a few examples notebooks
     - write visualisation module
     - write tensorflow/pytorch/jax modules
+
+    - make a gif for the README
+    - expand the README
+    - fill in the documentation sections
+    - choose tensorflow precision
+    - fix poetry things
+    - publish first version
 

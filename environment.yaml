@@ -4,7 +4,7 @@ channels:
   - nodefaults
 dependencies:
   - python=3.10.*
+  - poetry=1.8
   - pip
-  - poetry
 platforms:
   - linux-64
