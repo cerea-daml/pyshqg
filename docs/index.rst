@@ -11,17 +11,17 @@ meant to describe the large-scale circulation of the atmosphere under specific h
 This QG model is very special, because it is expressed in spherical harmonics and
 because it encapsulates complex physical processes.
 
-- `Documentation (this page) <https://pyshqg.readthedocs.io>`_.
-- `Source code <https://github.com/cerea-daml/pyshqg>`_.
-- `Issue tracker <https://github.com/cerea-daml/pyshqg/issues>`_.
+- `Documentation (this page) <https://pyshqg.readthedocs.io>`_
+- `Source code <https://github.com/cerea-daml/pyshqg>`_
+- `Issue tracker <https://github.com/cerea-daml/pyshqg/issues>`_
 
 .. toctree::
    :maxdepth: 1
    :caption: Contents
 
    pages/installation
-   pages/model
    pages/spherical_harmonics
+   pages/model
    pages/examples
    pages/changelog
    pages/api

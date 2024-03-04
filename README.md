@@ -11,9 +11,9 @@ meant to describe the large-scale circulation of the atmosphere under specific h
 This QG model is very special, because it is expressed in spherical harmonics and
 because it encapsulates complex physical processes.
 
-- [Documentation](https://pyshqg.readthedocs.io).
-- [Source code](https://github.com/cerea-daml/pyshqg).
-- [Issue tracker](https://github.com/cerea-daml/pyshqg/issues).
+- [Documentation](https://pyshqg.readthedocs.io)
+- [Source code](https://github.com/cerea-daml/pyshqg)
+- [Issue tracker](https://github.com/cerea-daml/pyshqg/issues)
 
 ## Installation
 
