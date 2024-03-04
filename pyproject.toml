@@ -2,7 +2,12 @@
 name = "pyshqg"
 version = "0.1.0"
 description = "QG Model in spherical harmonics"
-authors = ["Alban Farchi <alban.farchi@enpc.fr>"]
+authors = [
+    "Alban Farchi <alban.farchi@enpc.fr>",
+    "Marc Bocquet <marc.bocquet@enpc.fr>",
+    "Quentin Malartic <quentin.malartic@enpc.fr>",
+    "Fabio D'Andrea <fabio.dandrea@lmd.ipsl.fr>",
+]
 license = "MIT"
 readme = "README.md"
 

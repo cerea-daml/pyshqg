@@ -13,6 +13,7 @@
 import os
 import sys
 import tomli
+import datetime
 
 #import pyshqg
 sys.path.insert(0, os.path.abspath('..'))
@@ -20,16 +21,12 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 
-def _get_project_meta():
-    with open('../pyproject.toml', mode='rb') as pyproject:
-        return tomli.load(pyproject)['tool']['poetry']
+with open('../pyproject.toml', mode='rb') as pyproject:
+    pkg_meta = tomli.load(pyproject)['tool']['poetry']
 
-project = 'pyshqg'
-copyright = '2023, Alban Farchi'
-author = 'Alban Farchi'
-
-# The full version, including alpha/beta/rc tags
-pkg_meta = _get_project_meta()
+project = str(pkg_meta['name'])
+copyright = str(datetime.datetime.now().year) + ", CEREA-DAML Team"
+author = 'CEREA-DAML Team'
 version = str(pkg_meta['version'])
 release = version
 
