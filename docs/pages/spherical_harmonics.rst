@@ -15,12 +15,20 @@ Any real quare-integrable function :math:`f` on the sphere can be expressed as a
 where :math:`\theta` and :math:`\phi` are the latitude and longitude, 
 :math:`f_{l,m}` is the spherical harmonics coefficients for degree :math:`l` and 
 order :math:`m`, and :math:`Y_{l,m}` is the corresponding spherical harmonics function,
-define by
+defined by
 
 .. math::
 
    Y_{l,m}(\theta, \phi) = \begin{cases}
-   \bar{P}_{l,m}(\mathrm{cos}\theta)\mathrm{cos}m\phi, & \text{if $m\geq0$}, \\
-   -\bar{P}_{l,-m}(\mathrm{cos}\theta)\mathrm{sin}m\phi, & \text{if $m<0$}.
+   \bar{P}_{l,|m|}(\mathrm{cos}\theta)\mathrm{cos}(|m|\phi), & \text{if $m\geq0$}, \\
+   \bar{P}_{l,|m|}(\mathrm{cos}\theta)\mathrm{sin}(|m|\phi), & \text{if $m<0$}.
    \end{cases}
 
+:math:`\bar{P}_{l,m}` is the Legendre function, related to the Legendre polynomial
+:math:`P_{l}` by:
+
+.. math::
+   \begin{align}
+   P_{l}(x) &= \frac{1}{2^{l}l!} \frac{\mathrm{d}^{l}(x^{2}-1)^{l}}{\mathrm{d}x^{l}},\\
+   \bar{P}_{l,m}(x) &= (-1)^{m}(1-x^{2})^{m/2}\frac{\mathrm{d}^{m}P_{l}}{\mathrm{d}x^{m}}(x),
+   \end{align}
