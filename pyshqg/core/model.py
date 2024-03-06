@@ -4,10 +4,8 @@ import dataclasses
 
 import numpy as np
 import xarray as xr
-import tensorflow as tf
 
 
-# TODO: UPDATE THIS CLASS!!!
 class QGModelTrajectory:
     r"""Container class for a QG model trajectory.
 
@@ -28,7 +26,7 @@ class QGModelTrajectory:
     ----------
     core_dimensions : dict of str to list of str
         Mapping from potential variable name to list of core dimension names.
-    model : pyshqg.core_tensorflow.model.QGModel
+    model : pyshqg.core.model.QGModel
         Reference to the QG model instance.
     time : list of float
         List of the snapshot times.
@@ -41,7 +39,7 @@ class QGModelTrajectory:
 
         Parameters
         ----------
-        model : pyshqg.core_tensorflow.model.QGModel
+        model : pyshqg.core.model.QGModel
             Reference to the QG model instance.
         variables : list of str
             List of variables to record.
@@ -73,12 +71,12 @@ class QGModelTrajectory:
         ----------
         time : float
             Snapshot time.
-        state : dict of str to tf.Tensor
+        state : dict of str to backend array
             QG model state to record.
 
         Returns
         -------
-        state : dict of str to numpy.ndarray
+        state : dict of str to backend array
             Recorded QG model state.
         """
         self.time.append(time)
@@ -87,7 +85,11 @@ class QGModelTrajectory:
             list(self.variables),
         )
         for variable in self.variables:
-            self.variables[variable].append(state[variable].numpy())
+            self.variables[variable].append(
+                self.model.backend.to_numpy(
+                    state[variable]
+                )
+            )
         return state
 
     def to_numpy(self):
@@ -107,7 +109,11 @@ class QGModelTrajectory:
 
     def to_xarray(self):
         r"""Exports the trajectory to 'xarray' format."""
-        batch_dimensions = [f'batch_{i}' for i in range(self._num_batch_dimensions())]
+        num_batch_dimensions = self._num_batch_dimensions()
+        if num_batch_dimensions == 1:
+            batch_dimensions = ['batch']
+        else:
+            batch_dimensions = [f'batch_{i}' for i in range(num_batch_dimensions)]
         data_vars = {
             variable: (
                 ['time']+batch_dimensions+self.core_dimensions[variable],
@@ -136,19 +142,22 @@ class QGModel:
 
     Parameters
     ----------
-    spectral_transformations : pyshqg.core_tensorflow.spectral_transformations.SpectralTransformations
+    backend : pyshqg.backend.Backend object
+        The backend.
+    spectral_transformations : pyshqg.core.spectral_transformations.SpectralTransformations
         Object encapsulating the spectral transformations.
-    poisson_solver : pyshqg.core_tensorflow.poisson.QGPoissonSolver
+    poisson_solver : pyshqg.core.poisson.QGPoissonSolver
         Object encapsulating the Poisson solver.
-    dissipation : pyshqg.core_tensorflow.dissipation.QGDissipation
+    dissipation : pyshqg.core.dissipation.QGDissipation
         Object encapsulating the dissipation processes.
-    forcing : pyshqg.core_tensorflow.source.QGForcing
+    forcing : pyshqg.core.source.QGForcing
         Object encapsulating the forcing therm.
     """
-    spectral_transformations: 'pyshqg.core_tensorflow.spectral_transformations.SpectralTransformations'
-    poisson_solver: 'pyshqg.core_tensorflow.poisson.QGPoissonSolver'
-    dissipation: 'pyshqg.core_tensorflow.dissipation.QGDissipation'
-    forcing: 'pyshqg.core_tensorflow.source.QGForcing'
+    backend: 'pyshqg.backend.Backend'
+    spectral_transformations: 'pyshqg.core.spectral_transformations.SpectralTransformations'
+    poisson_solver: 'pyshqg.core.poisson.QGPoissonSolver'
+    dissipation: 'pyshqg.core.dissipation.QGDissipation'
+    forcing: 'pyshqg.core.source.QGForcing'
 
     @staticmethod
     def model_state(spec_q):
@@ -156,12 +165,12 @@ class QGModel:
 
         Parameters
         ----------
-        spec_q : tensorflow.Tensor, shape (..., 2, T+1, T+1)
+        spec_q : backend array, shape (..., 2, T+1, T+1)
             Relative vorticity in spectral space $\hat{q}$.
 
         Returns
         -------
-        state : dict of str to tensorflow.Tensor
+        state : dict of str to backend array
             QG model state as dictionary of variables.
         """
         return dict(spec_q=spec_q)
@@ -176,7 +185,7 @@ class QGModel:
 
         Returns
         -------
-        trajectory : pyshqg.core_tensorflow.model.QGModelTrajectory
+        trajectory : pyshqg.core.model.QGModelTrajectory
             Initialised trajectory object.
         """
         return QGModelTrajectory(self, variables)
@@ -192,6 +201,7 @@ class QGModel:
         already available, then nothing happens.
 
         The present method currently supports the following variables:
+
         - the total vorticity in spectral space $\hat{q}^{\mathsf{t}}$;
         - the stream function in spectral space $\hat{\psi}$;
         - the drag in real space $\zeta$;
@@ -201,14 +211,14 @@ class QGModel:
 
         Parameters
         ----------
-        state : dict of str to tensorflow.Tensor
+        state : dict of str to backend array
             Current QG model state.
         variable : str
             Requested variable.
 
         Returns
         -------
-        state : dict of str to tensorflow.Tensor
+        state : dict of str to backend array
             Updated QG model state.
         """
 
@@ -264,14 +274,14 @@ class QGModel:
 
         Parameters
         ----------
-        state : dict of str to tensorflow.Tensor
+        state : dict of str to backend array
             Current QG model state.
         variables : list of str
             List of requested variable.
 
         Returns
         -------
-        state : dict of str to tensorflow.Tensor
+        state : dict of str to backend array
             Updated QG model state.
         """
         for variable in variables:
@@ -289,12 +299,12 @@ class QGModel:
 
         Parameters
         ----------
-        state : dict of str to tensorflow.Tensor
+        state : dict of str to backend array
             Current QG model state.
 
         Returns
         -------
-        tendencies : dict of str to tensorflow.Tensor
+        tendencies : dict of str to backend array
             Tendencies associated to the QG model state.
         """
         # compute dependent variables
@@ -353,16 +363,16 @@ class QGModel:
 
         Parameters
         ----------
-        state : dict of str to tensorflow.Tensor
+        state : dict of str to backend array
             Current QG model state.
-        tendencies : dict of str to tensorflow.Tensor
+        tendencies : dict of str to backend array
             QG model tendencies to apply.
         step : float
             Step size.
 
         Returns
         -------
-        state : dict of str to tensorflow.Tensor
+        state : dict of str to backend array
             Updated QG model state.
 
         Notes
@@ -370,7 +380,7 @@ class QGModel:
         This algorithmic step is at the core of every
         explicit integration scheme, e.g. the Runge--Kutta
         schemes as used in 
-        `pyshqg.core_tensorflow.integration.RungeKuttaModelIntegrator`.
+        `pyshqg.core.integration.RungeKuttaModelIntegrator`.
         """
         return self.model_state(
             state['spec_q'] + step * tendencies['spec_q']

@@ -1,9 +1,9 @@
 import numpy as np
-import tensorflow as tf
 import pytest
 
 from pyshqg.preprocessing.reference_data import load_test_data
-from pyshqg.core_tensorflow.constructors import construct_model, construct_integrator
+from pyshqg.backend.tensorflow_backend import TensorflowBackend as Backend
+from pyshqg.core.constructors import construct_model, construct_integrator
 
 def assert_close(
     x, 
@@ -54,8 +54,12 @@ def ds_test(config):
     return load_test_data(**config)
 
 @pytest.fixture
-def model(ds_test):
-    return construct_model(ds_test.config)
+def backend():
+    return Backend('float64')
+
+@pytest.fixture
+def model(backend, ds_test):
+    return construct_model(backend, ds_test.config)
 
 @pytest.fixture(params=['ee', 'abm', 'rk2', 'rk4'])
 def integrator_name(request):
@@ -69,33 +73,33 @@ def integrator(ds_test, model, integrator_name):
 def test_config(config):
     print(config)
 
-def test_total_q(ds_test, model):
-    spec_q = tf.convert_to_tensor(ds_test.spec_q.to_numpy())
+def test_total_q(backend, ds_test, model):
+    spec_q = backend.from_numpy(ds_test.spec_q.to_numpy())
     spec_total_q = model.poisson_solver.q_to_total_q(spec_q)
     assert_close(
-        spec_total_q.numpy(),
+        backend.to_numpy(spec_total_q),
         ds_test.spec_total_q.to_numpy(),
     )
 
-def test_psi(ds_test, model):
-    spec_total_q = tf.convert_to_tensor(ds_test.spec_total_q.to_numpy())
+def test_psi(backend, ds_test, model):
+    spec_total_q = backend.from_numpy(ds_test.spec_total_q.to_numpy())
     spec_psi = model.poisson_solver.total_q_to_psi(spec_total_q)
     assert_close(
-        spec_psi.numpy(),
+        backend.to_numpy(spec_psi),
         ds_test.spec_psi.to_numpy(),
     )
 
-def test_zeta(ds_test, model):
-    spec_psi = tf.convert_to_tensor(ds_test.spec_psi.to_numpy())
+def test_zeta(backend, ds_test, model):
+    spec_psi = backend.from_numpy(ds_test.spec_psi.to_numpy())
     zeta = model.poisson_solver.psi_to_zeta(spec_psi)
     assert_close(
-        zeta.numpy(),
+        backend.to_numpy(zeta),
         ds_test.zeta.to_numpy(),
     )
 
-def test_jacobian(ds_test, model):
-    spec_q = tf.convert_to_tensor(ds_test.spec_q.to_numpy())
-    spec_psi = tf.convert_to_tensor(ds_test.spec_psi.to_numpy())
+def test_jacobian(backend, ds_test, model):
+    spec_q = backend.from_numpy(ds_test.spec_q.to_numpy())
+    spec_psi = backend.from_numpy(ds_test.spec_psi.to_numpy())
     d_q_d_theta = model.spectral_transformations.spec_to_grid_grad_theta(spec_q)
     d_q_d_phi = model.spectral_transformations.spec_to_grid_grad_phi(spec_q)
     d_psi_d_theta = model.spectral_transformations.spec_to_grid_grad_theta(spec_psi)
@@ -105,24 +109,24 @@ def test_jacobian(ds_test, model):
         d_q_d_theta * d_psi_d_phi
     )
     assert_close(
-        jacobian.numpy(),
+        backend.to_numpy(jacobian),
         ds_test.jacobian.to_numpy(),
     )
 
 # this test accuracy is not very good :(
-def test_forcing(ds_test, model):
+def test_forcing(backend, ds_test, model):
     forcing = model.forcing.compute_forcing()
     assert_close(
-        forcing.numpy(),
+        backend.to_numpy(forcing),
         ds_test.forcing.to_numpy(),
         all_rtol=None,
         rms_rtol=1e-6,
     )
 
-def test_dissipation_ekman(ds_test, model):
-    zeta = tf.convert_to_tensor(ds_test.zeta.to_numpy())
-    spec_q = tf.convert_to_tensor(ds_test.spec_q.to_numpy())
-    spec_psi = tf.convert_to_tensor(ds_test.spec_psi.to_numpy())
+def test_dissipation_ekman(backend, ds_test, model):
+    zeta = backend.from_numpy(ds_test.zeta.to_numpy())
+    spec_q = backend.from_numpy(ds_test.spec_q.to_numpy())
+    spec_psi = backend.from_numpy(ds_test.spec_psi.to_numpy())
     dq_dtheta = model.spectral_transformations.spec_to_grid_grad_theta(spec_q)
     dq_dphi = model.spectral_transformations.spec_to_grid_grad_phi(spec_q)
     dpsi_dtheta = model.spectral_transformations.spec_to_grid_grad_theta(spec_psi)
@@ -133,37 +137,37 @@ def test_dissipation_ekman(ds_test, model):
         dpsi_dphi,
     )
     assert_close(
-        dissipation_ekman.numpy(),
+        backend.to_numpy(dissipation_ekman),
         ds_test.dissip_ekman.to_numpy(),
     )
 
-def test_dissipation_selective(ds_test, model):
-    spec_total_q = tf.convert_to_tensor(ds_test.spec_total_q.to_numpy())
+def test_dissipation_selective(backend, ds_test, model):
+    spec_total_q = backend.from_numpy(ds_test.spec_total_q.to_numpy())
     spec_dissipation_selective = model.dissipation.selective.compute_selective_dissipation(
         spec_total_q,
     )
     assert_close(
-        spec_dissipation_selective.numpy(),
+        backend.to_numpy(spec_dissipation_selective),
         ds_test.spec_dissip_sel.to_numpy(),
     )
 
 # this test accuracy is not very good :(
-def test_dissipation_thermal(ds_test, model):
-    spec_psi = tf.convert_to_tensor(ds_test.spec_psi.to_numpy())
+def test_dissipation_thermal(backend, ds_test, model):
+    spec_psi = backend.from_numpy(ds_test.spec_psi.to_numpy())
     spec_dissipation_thermal = model.dissipation.thermal.compute_thermal_dissipation(
         spec_psi,
     )
     assert_close(
-        spec_dissipation_thermal.numpy(),
+        backend.to_numpy(spec_dissipation_thermal),
         ds_test.spec_dissip_therm.to_numpy(),
         all_rtol=None,
     )
 
-def test_grid_dq_dt(ds_test, model):
+def test_grid_dq_dt(backend, ds_test, model):
     # 1: jacobian
-    spec_q = tf.convert_to_tensor(ds_test.spec_q.to_numpy())
-    spec_psi = tf.convert_to_tensor(ds_test.spec_psi.to_numpy())
-    zeta = tf.convert_to_tensor(ds_test.zeta.to_numpy())
+    spec_q = backend.from_numpy(ds_test.spec_q.to_numpy())
+    spec_psi = backend.from_numpy(ds_test.spec_psi.to_numpy())
+    zeta = backend.from_numpy(ds_test.zeta.to_numpy())
     dq_dtheta = model.spectral_transformations.spec_to_grid_grad_theta(spec_q)
     dq_dphi = model.spectral_transformations.spec_to_grid_grad_phi(spec_q)
     dpsi_dtheta = model.spectral_transformations.spec_to_grid_grad_theta(spec_psi)
@@ -176,7 +180,7 @@ def test_grid_dq_dt(ds_test, model):
     # 2: forcing (replace by test data forcing)
     # otherwise, accuracy is too low...
     forcing = model.forcing.compute_forcing()
-    forcing = tf.convert_to_tensor(ds_test.forcing.to_numpy())
+    forcing = backend.from_numpy(ds_test.forcing.to_numpy())
 
     # 3: Ekman dissipation
     dissipation_ekman = model.dissipation.ekman.compute_ekman_dissipation(
@@ -188,27 +192,27 @@ def test_grid_dq_dt(ds_test, model):
     # aggregate
     grid_dq_dt = jacobian + forcing - dissipation_ekman
     assert_close(
-        grid_dq_dt.numpy(),
+        backend.to_numpy(grid_dq_dt),
         ds_test.grid_dq_dt.to_numpy(),
     )
 
-def test_grid_to_spec_dq_dt(ds_test, model):
-    grid_dq_dt = tf.convert_to_tensor(ds_test.grid_dq_dt.to_numpy())
+def test_grid_to_spec_dq_dt(backend, ds_test, model):
+    grid_dq_dt = backend.from_numpy(ds_test.grid_dq_dt.to_numpy())
     grid_to_spec_dq_dt = model.spectral_transformations.grid_to_spec(grid_dq_dt)
     assert_close(
-        grid_to_spec_dq_dt.numpy(),
+        backend.to_numpy(grid_to_spec_dq_dt),
         ds_test.grid_to_spec_dq_dt.to_numpy(),
     )
 
-def test_spec_dq_dt(ds_test, model):
+def test_spec_dq_dt(backend, ds_test, model):
     # 1: selective dissipation
-    spec_total_q = tf.convert_to_tensor(ds_test.spec_total_q.to_numpy())
+    spec_total_q = backend.from_numpy(ds_test.spec_total_q.to_numpy())
     spec_dissipation_selective = model.dissipation.selective.compute_selective_dissipation(
         spec_total_q,
     )
 
     # 2: thermal dissipation (accuracy is low...)
-    spec_psi = tf.convert_to_tensor(ds_test.spec_psi.to_numpy())
+    spec_psi = backend.from_numpy(ds_test.spec_psi.to_numpy())
     spec_dissipation_thermal = model.dissipation.thermal.compute_thermal_dissipation(
         spec_psi,
     )
@@ -216,25 +220,25 @@ def test_spec_dq_dt(ds_test, model):
     # aggregate
     spec_dq_dt = -spec_dissipation_selective - spec_dissipation_thermal
     assert_close(
-        spec_dq_dt.numpy(),
+        backend.to_numpy(spec_dq_dt),
         ds_test.spec_dq_dt.to_numpy(),
         all_rtol=None,
     )
 
-def test_tendencies(ds_test, model):
-    spec_q = tf.convert_to_tensor(ds_test.spec_q.to_numpy())
+def test_tendencies(backend, ds_test, model):
+    spec_q = backend.from_numpy(ds_test.spec_q.to_numpy())
     spec_tendencies = model.compute_model_tendencies(model.model_state(spec_q))
     assert_close(
-        spec_tendencies['spec_q'].numpy(),
+        backend.to_numpy(spec_tendencies['spec_q']),
         ds_test.spec_tendencies.to_numpy(),
         all_rtol=None,
     )
 
-def test_integration(ds_test, model, integrator_name, integrator):
-    spec_q = tf.convert_to_tensor(ds_test.spec_q.to_numpy())
+def test_integration(backend, ds_test, model, integrator_name, integrator):
+    spec_q = backend.from_numpy(ds_test.spec_q.to_numpy())
     spec_integrated = integrator.forward(model.model_state(spec_q))
     assert_close(
-        spec_integrated['spec_q'].numpy(),
+        backend.to_numpy(spec_integrated['spec_q']),
         ds_test[f'spec_{integrator_name}'].to_numpy(),
         all_rtol=None,
     )

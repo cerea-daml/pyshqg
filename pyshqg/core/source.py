@@ -1,25 +1,26 @@
 r"""Submodule dedicated to sources."""
 
-import tensorflow as tf
 
 class QGForcing:
     r"""Class for a standard, constant forcing.
 
     Attributes
     ----------
-    forcing : tf.Tensor, shape (Nlevel, Nlat, Nlon)
+    forcing : backend array, shape (Nlevel, Nlat, Nlon)
         Forcing coefficients in grid space.
     """
 
-    def __init__(self, forcing):
+    def __init__(self, backend, forcing):
         r"""Constructor for the forcing.
 
         Parameters
         ----------
+        backend : pyshqg.backend.Backend object
+            The backend.
         forcing : numpy.ndarray, shape (Nlevel, Nlat, Nlon)
             Forcing coefficients in grid space.
         """
-        self.forcing = tf.convert_to_tensor(forcing)
+        self.forcing = backend.from_numpy(forcing)
 
     def compute_forcing(self):
         r"""Computes the forcing
@@ -29,7 +30,7 @@ class QGForcing:
 
         Returns
         -------
-        forcing : tf.Tensor, shape (Nlevel, Nlat, Nlon)
+        forcing : backend array, shape (Nlevel, Nlat, Nlon)
             Forcing coefficients in grid space.
         """
         return self.forcing

@@ -16,17 +16,20 @@ class QGPoissonSolver:
 
     Attributes
     ----------
-    spectral_transformations : pyshqg.core_numpy.spectral_transformations.SpectralTransformations
+    backend : pyshqg.backend.Backend object
+        The backend.
+    spectral_transformations : pyshqg.core.spectral_transformations.SpectralTransformations
         The object encapsulating the spectral transformations.
-    spec_qp : np.ndarray, shape (Nlevel, 2, T+1, T+1)
+    spec_qp : backend array, shape (Nlevel, 2, T+1, T+1)
         The planet vorticity, corrected by the orography, in spectral space $\hat{q}^{\mathsf{p}}$.
-    q_to_psi_coupling : np.ndarray, shape (Nlevel, Nlevel, T+1)
+    q_to_psi_coupling : backend array, shape (Nlevel, Nlevel, T+1)
         The vertical coupling coefficients for the
         $\hat{q}^{\mathsf{t}} \mapsto \hat{\psi}$ transformation.
     """
 
     def __init__(
         self,
+        backend,
         spectral_transformations,
         vertical_parametrisation,
         orography,
@@ -41,7 +44,9 @@ class QGPoissonSolver:
 
         Parameters
         ----------
-        spectral_transformations : pyshqg.core_numpy.spectral_transformations.SpectralTransformations
+        backend : pyshqg.backend.Backend object
+            The backend.
+        spectral_transformations : pyshqg.core.spectral_transformations.SpectralTransformations
             The object encapsulating the spectral transformations.
         vertical_parametrisation : pyshqg.preprocessing.vertical_parametrisation.VerticalParametrisation
             The object encapsulating the vertical parametrisation.
@@ -50,6 +55,7 @@ class QGPoissonSolver:
         orography_scale : float
             The vertical length scale for the orography.
         """
+        self.backend = backend
         self.spectral_transformations = spectral_transformations
         
         # pre-compute the corrected planet vorticity
@@ -90,19 +96,21 @@ class QGPoissonSolver:
 
         Returns
         -------
-        spec_qp : np.ndarray, shape (Nlevel, 2, T+1, T+1)
+        spec_qp : backend array, shape (Nlevel, 2, T+1, T+1)
             The corrected planet vorticity in spectral space $\hat{q}^{\mathsf{p}}$.
         """
         # planet rotation (beta plane approximation)
-        qp = self.spectral_transformations.precompute_planet_vorticity()
-        qp = np.repeat(
-            qp[np.newaxis, :, :], 
+        qp = self.spectral_transformations.qp
+        qp = self.backend.repeat(
+            self.backend.expand_dims(qp, axis=0),
             vertical_parametrisation.num_levels,
             axis=0,
         )
 
-        # orography correction
+        # orography correction (in numpy)
+        qp = self.backend.to_numpy(qp)
         qp = orography.precorrect_planet_vorticity(qp, orography_scale)
+        qp = self.backend.from_numpy(qp)
 
         # total f in spectral space
         return self.spectral_transformations.grid_to_spec(qp)
@@ -130,7 +138,7 @@ class QGPoissonSolver:
 
         Returns
         -------
-        q_to_psi_coupling : np.ndarray, shape (Nlevel, Nlevel, T+1)
+        q_to_psi_coupling : backend array, shape (Nlevel, Nlevel, T+1)
             The vertical coupling coefficients.
         """
         # first compute the common part of the coupling matrix
@@ -154,7 +162,7 @@ class QGPoissonSolver:
                 coupling_matrix
             )
 
-        return q_to_psi_coupling
+        return self.backend.from_numpy(q_to_psi_coupling)
 
     def q_to_total_q(self, spec_q):
         r"""Computes the $\hat{q} \mapsto \hat{q}^{\mathsf{t}}$ transformation.
@@ -165,12 +173,12 @@ class QGPoissonSolver:
 
         Parameters
         ----------
-        spec_q : np.ndarray, shape (..., Nlevel, 2, T+1, T+1)
+        spec_q : backend array, shape (..., Nlevel, 2, T+1, T+1)
             The relative vorticity in spectral space $\hat{q}$.
 
         Returns
         -------
-        spec_total_q : np.ndarray, shape (..., Nlevel, 2, T+1, T+1)
+        spec_total_q : backend array, shape (..., Nlevel, 2, T+1, T+1)
             The total vorticity in spectral space $\hat{q}^{\mathsf{t}}$.
         """
         return spec_q + self.spec_qp
@@ -183,15 +191,15 @@ class QGPoissonSolver:
 
         Parameters
         ----------
-        spec_total_q : np.ndarray, shape (..., Nlevel, 2, T+1, T+1)
+        spec_total_q : backend array, shape (..., Nlevel, 2, T+1, T+1)
             The total vorticity in spectral space $\hat{q}^{\mathsf{t}}$.
 
         Returns
         -------
-        spec_psi : np.ndarray, shape (..., Nlevel, 2, T+1, T+1)
+        spec_psi : backend array, shape (..., Nlevel, 2, T+1, T+1)
             The stream function in spectral space $\hat{\psi}$.
         """
-        return np.einsum(
+        return self.backend.einsum(
             'ijl,...jklm->...iklm',
             self.q_to_psi_coupling,
             spec_total_q,
@@ -207,15 +215,15 @@ class QGPoissonSolver:
 
         Parameters
         ----------
-        spec_psi : np.ndarray, shape (..., Nlevel, 2, T+1, T+1)
+        spec_psi : backend array, shape (..., Nlevel, 2, T+1, T+1)
             The stream function in spectral space $\hat{\psi}$.
 
         Returns
         -------
-        zeta : np.ndarray, shape (..., Nlat, Nlon)
+        zeta : backend array, shape (..., Nlat, Nlon)
             The drag in grid space $\zeta$.
         """
-        spec_zeta = np.einsum(
+        spec_zeta = self.backend.einsum(
             '...lm,l->...lm',
             spec_psi[..., -1, :, :, :],
             self.spectral_transformations.laplacian_spectrum,

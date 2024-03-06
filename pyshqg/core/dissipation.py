@@ -1,11 +1,6 @@
 r"""Submodule dedicated to dissipation processes."""
-# TODO:
-# - ekman: replace np.zeros_like by np.pad?
 
 import dataclasses
-
-import numpy as np
-import tensorflow as tf
 
 
 class QGEkmanDissipation:
@@ -15,16 +10,19 @@ class QGEkmanDissipation:
 
     Attributes
     ----------
-    mu : tf.Tensor, shape (Nlat, Nlon)
+    backend : pyshqg.backend.Backend object
+        The backend.
+    mu : backend array, shape (Nlat, Nlon)
         Friction coefficient $\mu$ defined on the grid.
-    dmu_dphi : tf.Tensor, shape (Nlat, Nlon)
+    dmu_dphi : backend array, shape (Nlat, Nlon)
         Gradient of $\mu$ with respect to longitude ($\phi$).
-    dmu_dtheta : tf.Tensor, shape (Nlat, Nlon)
+    dmu_dtheta : backend array, shape (Nlat, Nlon)
         Gradient of $\mu$ with respect to latitude ($\theta$).
     """
 
     def __init__(
         self,
+        backend,
         spectral_transformations,
         orography,
         tau,
@@ -40,7 +38,9 @@ class QGEkmanDissipation:
 
         Parameters
         ----------
-        spectral_transformations : pyshqg.core_numpy.spectral_transformations.SpectralTransformations
+        backend : pyshqg.backend.Backend object
+            The backend.
+        spectral_transformations : pyshqg.core.spectral_transformations.SpectralTransformations
             The object encapsulating the spectral transformations.
         orography : pyshqg.preprocessing.orography.Orography
             The object encapsulating the orography in the grid.
@@ -53,8 +53,10 @@ class QGEkmanDissipation:
         orography_scale : float
             The vertical length scale for the orography in $\mu$.
         """
+        self.backend = backend
+
         # pre-compute friction field
-        self.mu = tf.convert_to_tensor(orography.precompute_ekman_friction(
+        self.mu = backend.from_numpy(orography.precompute_ekman_friction(
             weight_land_sea_mask,
             weight_orography,
             orography_scale,
@@ -68,7 +70,7 @@ class QGEkmanDissipation:
         )
         self.dmu_dtheta = spectral_transformations.spec_to_grid_grad_theta(
             spec_mu
-        )
+        )   
 
     def compute_ekman_dissipation(self, zeta, dpsi_dtheta, dpsi_dphi):
         r"""Computes the Ekman dissipation term in the QG model tendencies.
@@ -80,31 +82,36 @@ class QGEkmanDissipation:
 
         Parameters
         ----------
-        zeta : tf.Tensor, shape (..., Nlat, Nlon)
+        zeta : backend array, shape (..., Nlat, Nlon)
             The drag $\zeta$ in grid space.
-        dpsi_dtheta : tf.Tensor, shape (..., Nlevel, Nlat, Nlon)
+        dpsi_dtheta : backend array, shape (..., Nlevel, Nlat, Nlon)
             The gradient of the stream function $\psi$ with respect 
             to latitude ($\theta$) in grid space.
-        dpsi_dphi : tf.Tensor, shape (..., Nlevel, Nlat, Nlon)
+        dpsi_dphi : backend array, shape (..., Nlevel, Nlat, Nlon)
             The gradient of the stream function $\psi$ with respect 
             to longitude ($\phi$) in grid space.
 
         Returns
         -------
-        ekman : tf.Tensor, shape (..., Nlevel, Nlat, Nlon)
+        ekman : backend array, shape (..., Nlevel, Nlat, Nlon)
             The Ekman dissipation term in the grid.
         """
+        num_levels = dpsi_dtheta.shape[-3]
         ekman_1 = zeta * self.mu
         ekman_2 = ( 
             self.dmu_dtheta * dpsi_dtheta[..., -1, :, :] +
             self.dmu_dphi * dpsi_dphi[..., -1, :, :]
         )
-        ekman = tf.expand_dims(ekman_1 + ekman_2, -3)
+        ekman = self.backend.expand_dims(ekman_1 + ekman_2, -3)
         rank = len(ekman.shape)
         paddings = [[0, 0] for _ in range(rank)]
-        paddings[-3] = [2, 0]
-        ekman = tf.pad(ekman, paddings, mode='CONSTANT', constant_values=0)
-        return ekman
+        paddings[-3] = [num_levels-1, 0]
+        return self.backend.pad(
+            ekman,
+            paddings,
+            mode='constant',
+            constant_values=0,
+        )
 
 
 class QGSelectiveDissipation:
@@ -114,13 +121,16 @@ class QGSelectiveDissipation:
 
     Attributes
     ----------
-    spectrum : tf.Tensor, shape (T+1,)
+    backend : pyshqg.backend.Backend object
+        The backend.
+    spectrum : backend array, shape (T+1,)
         Eignen spectrum in spectral space, with respect to `l`
         (the first spectral index), of the selective dissipation.
     """
 
     def __init__(
         self,
+        backend,
         spectral_transformations,
         tau,
     ):
@@ -132,13 +142,16 @@ class QGSelectiveDissipation:
 
         Parameters
         ----------
-        spectral_transformations : pyshqg.core_numpy.spectral_transformations.SpectralTransformations
+        backend : pyshqg.backend.Backend object
+            The backend.
+        spectral_transformations : pyshqg.core.spectral_transformations.SpectralTransformations
             The object encapsulating the spectral transformations.
         tau : float
             The parameter $\tau$ of the selective dissipation.
         """
+        self.backend = backend
         T = spectral_transformations.T
-        self.spectrum = tf.convert_to_tensor((
+        self.spectrum = backend.from_numpy((
             spectral_transformations.planet_radius**2 *
             spectral_transformations.laplacian_spectrum / (
             T * (T+1)
@@ -152,15 +165,15 @@ class QGSelectiveDissipation:
 
         Parameters
         ----------
-        spec_total_q : tf.Tensor, shape (..., Nlevel, 2, T+1, T+1)
+        spec_total_q : backend array, shape (..., Nlevel, 2, T+1, T+1)
             The total vorticity in spectral space $\hat{q}^{\mathsf{t}}$.
 
         Returns
         -------
-        selective : tf.Tensor, shape (..., Nlevel, 2, T+1, T+1)
+        selective : backend array, shape (..., Nlevel, 2, T+1, T+1)
             The selective dissipation term in spectral space.
         """
-        return tf.einsum(
+        return self.backend.einsum(
             '...lm,l->...lm',
             spec_total_q,
             self.spectrum,
@@ -174,12 +187,15 @@ class QGThermalDissipation:
 
     Attributes
     ----------
-    thermal_coupling : tf.Tensor, shape (Nlevel, Nlevel)
+    backend : pyshqg.backend.Backend object
+        The backend.
+    thermal_coupling : backend array, shape (Nlevel, Nlevel)
         Vertical coupling matrix for the thermal dissipation.
     """
 
     def __init__(
         self,
+        backend,
         vertical_parametrisation,
         tau,
     ):
@@ -190,12 +206,15 @@ class QGThermalDissipation:
 
         Parameters
         ----------
+        backend : pyshqg.backend.Backend object
+            The backend.
         vertical_parametrisation : pyshqg.preprocessing.vertical_parametrisation.VerticalParametrisation
             The object encapsulating the vertical parametrisation.
         tau : float
             The parameter $\tau$ of the thermal dissipation.
         """
-        self.thermal_coupling = tf.convert_to_tensor(
+        self.backend = backend
+        self.thermal_coupling = backend.from_numpy(
             vertical_parametrisation.precompute_coupling_matrix(
                 scaling=1/tau
             )
@@ -209,15 +228,15 @@ class QGThermalDissipation:
 
         Parameters
         ----------
-        spec_psi : tf.Tensor, shape (..., Nlevel, 2, T+1, T+1)
+        spec_psi : backend array, shape (..., Nlevel, 2, T+1, T+1)
             The stream function in spectral space $\hat{\psi}$.
 
         Returns
         -------
-        thermal : tf.Tensor, shape (..., Nlevel, 2, T+1, T+1)
+        thermal : backend array, shape (..., Nlevel, 2, T+1, T+1)
             The thermal dissipation term in spectral space.
         """
-        return tf.einsum(
+        return self.backend.einsum(
             '...jklm,ij->...iklm',
             spec_psi,
             self.thermal_coupling,
@@ -230,14 +249,14 @@ class QGDissipation:
 
     Parameters
     ----------
-    ekman: pyshqg.core_tensorflow.dissipation.QGEkmanDissipation
+    ekman: pyshqg.core.dissipation.QGEkmanDissipation
         The Ekman dissipation object.
-    selective: pyshqg.core_tensorflow.dissipation.QGSelectiveDissipation
+    selective: pyshqg.core.dissipation.QGSelectiveDissipation
         The selective dissipation object.
-    thermal: pyshqg.core_tensorflow.dissipation.QGThermalDissipation
+    thermal: pyshqg.core.dissipation.QGThermalDissipation
         The thermal dissipation object.
     """
-    ekman: 'pyshqg.core_tensorflow.dissipation.QGEkmanDissipation'
-    selective: 'pyshqg.core_tensorflow.dissipation.QGSelectiveDissipation'
-    thermal: 'pyshqg.core_tensorflow.dissipation.QGThermalDissipation'
+    ekman: 'pyshqg.core.dissipation.QGEkmanDissipation'
+    selective: 'pyshqg.core.dissipation.QGSelectiveDissipation'
+    thermal: 'pyshqg.core.dissipation.QGThermalDissipation'
 
