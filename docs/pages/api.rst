@@ -6,6 +6,7 @@ API
 .. toctree::
    :maxdepth: 4
 
-   pyshqg.core_numpy
-   pyshqg.preprocessing
+   api/pyshqg.preprocessing
+   api/pyshqg.core
+   api/pyshqg.backend
 

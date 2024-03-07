@@ -14,9 +14,8 @@ The ``numpy``-based variant depends on:
 - Python;
 - `NumPy <http://www.numpy.org>`_ for array support;
 - `pyshtools <https://shtools.github.io/SHTOOLS/index.html>`_ for the spherical harmonics coefficients;
-- `SciPy <https://scipy.org>`_ for some of the Fourier transformations;
-- `Xarray <https://xarray.dev>`_ for the dataset support;
-- `Zarr <https://zarr.readthedocs.io>`_ for the dataset storage;
+- `Xarray <https://xarray.dev>`_ for dataset support;
+- `Zarr <https://zarr.readthedocs.io>`_ for dataset storage;
 - `tqdm <https://tqdm.github.io>`_ for the progress bar.
 
 The ``tensorflow``-based variant additionally depends on

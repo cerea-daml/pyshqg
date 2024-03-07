@@ -114,10 +114,8 @@ class SpectralTransformations:
         Several variants are computed:
 
         - `'PLM'`: for the standard transformation from spectral space to grid space;
-        - `'PPLM'`: for the transformation from spectral space to grid space with
-        derivative with respect to longitude;
-        - `'ALM'`: for the transformation from spectral space to grid space with
-        derivative with respect to latitude;
+        - `'PPLM'`: for the transformation from spectral space to grid space with derivative with respect to longitude;
+        - `'ALM'`: for the transformation from spectral space to grid space with derivative with respect to latitude;
         - `'PW'`: for the transformation from grid space to spectral space.
 
         Note that all these coefficients are pre-computed

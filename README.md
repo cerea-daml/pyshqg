@@ -52,6 +52,7 @@ in Fortran written at LMD by XXX.
 
 ## Todo-list
 
+    - update readme
     - make more example notebooks
     - fill in the documentation sections
     - choose tensorflow precision

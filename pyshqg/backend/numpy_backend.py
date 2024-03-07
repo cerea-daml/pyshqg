@@ -1,20 +1,11 @@
 r"""Submodule dedicated to numpy backend."""
 
-import dataclasses
-
 import numpy as np
 
+import pyshqg.backend.abstract
 
-@dataclasses.dataclass
-class NumpyBackend:
-    r"""Numpy backend for the core model.
-
-    Parameters
-    ----------
-    floatx : str
-        Precision for real numbers.
-    """
-    floatx: 'str'
+class NumpyBackend(pyshqg.backend.abstract.Backend):
+    r"""Numpy backend."""
 
     def from_numpy(self, array):
         r"""Converts an array from `numpy` into backend format.
@@ -36,7 +27,7 @@ class NumpyBackend:
 
     @staticmethod
     def to_numpy(array):
-        r"""Converts an array from backend format into `numpy`.
+        r"""Converts an array from backend into `numpy` format.
 
         Here the backend is `numpy`.
         Therefore, there is nothing to do.

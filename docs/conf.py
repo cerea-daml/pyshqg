@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 with open('../pyproject.toml', mode='rb') as pyproject:
-    pkg_meta = tomli.load(pyproject)['tool']['poetry']
+    pkg_meta = tomli.load(pyproject)['project']
 
 project = str(pkg_meta['name'])
 copyright = str(datetime.datetime.now().year) + ", CEREA-DAML Team"

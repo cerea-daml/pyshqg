@@ -1,13 +1,28 @@
-r"""Submodule dedicated to tensorflow backend."""
+r"""Submodule dedicated to abstract backend."""
 
-import tensorflow as tf
-
-import pyshqg.backend.abstract
+import abc
 
 
-class TensorflowBackend(pyshqg.backend.abstract.Backend):
-    r"""Tensorflow backend."""
+class Backend(abc.ABC):
+    r"""Abstract backend.
 
+    Attributes
+    ----------
+    floatx : str
+        Precision for real numbers.
+    """
+
+    def __init__(self, floatx):
+        r"""Constructor for the backend.
+
+        Parameters
+        ----------
+        floatx : str
+            Precision for real numbers.
+        """
+        self.floatx = floatx
+
+    @abc.abstractmethod
     def from_numpy(self, array):
         r"""Converts an array from `numpy` into backend format.
 
@@ -18,18 +33,19 @@ class TensorflowBackend(pyshqg.backend.abstract.Backend):
 
         Returns
         -------
-        tensor : tensorflow.Tensor
+        array : backend array
             Array in backend format.
         """
-        return tf.convert_to_tensor(array, dtype=self.floatx)
+        pass
 
     @staticmethod
-    def to_numpy(tensor):
+    @abc.abstractmethod
+    def to_numpy(array):
         r"""Converts an array from backend into `numpy` format.
 
         Parameters
         ----------
-        tensor : tensorflow.Tensor
+        array : backend array
             Array in backend format.
 
         Returns
@@ -37,45 +53,45 @@ class TensorflowBackend(pyshqg.backend.abstract.Backend):
         array : numpy.ndarray
             Array in `numpy` format.
         """
-        return tensor.numpy()
+        pass
 
     @staticmethod
+    @abc.abstractmethod
     def expand_dims(*args, **kwargs):
-        r"""Wrapper around `tensorflow.expand_dims`."""
-        return tf.expand_dims(*args, **kwargs)
+        r"""Backend equivalent of `numpy.expand_dims`."""
+        pass
 
     @staticmethod
-    def pad(*args, mode='constant', **kwargs):
-        r"""Wrapper around `tensorflow.pad`.
-
-        Notes
-        -----
-        The kwarg `mode` is uppercased before
-        being sent to `tensorflow.pad` in order
-        to match `numpy` syntax.
-        """
-        return tf.pad(*args, mode=mode.upper(), **kwargs)
+    @abc.abstractmethod
+    def pad(*args, **kwargs):
+        r"""Backend equivalent of `numpy.pad`."""
+        pass
 
     @staticmethod
+    @abc.abstractmethod
     def einsum(*args, **kwargs):
-        r"""Wrapper around `tensorflow.einsum`."""
-        return tf.einsum(*args, **kwargs)
+        r"""Backend equivalent of `numpy.einsum`."""
+        pass
 
+    @abc.abstractmethod
     def range(self, *args, **kwargs):
-        r"""Wrapper around `tensorflow.range` using real numbers."""
-        return tf.range(*args, **kwargs, dtype=self.floatx)
+        r"""Backend equivalent of `numpy.arange` using real numbers."""
+        pass
 
     @staticmethod
+    @abc.abstractmethod
     def concatenate(*args, **kwargs):
-        r"""Wrapper around `tensorflow.concat`."""
-        return tf.concat(*args, **kwargs)
+        r"""Backend equivalent of `numpy.concatenate`."""
+        pass
 
     @staticmethod
+    @abc.abstractmethod
     def repeat(*args, **kwargs):
-        r"""Wrapper around `tensorflow.repeat`."""
-        return tf.repeat(*args, **kwargs)
+        r"""Backend equivalent of `numpy.repeat`."""
+        pass
 
     @staticmethod
+    @abc.abstractmethod
     def apply_fft(T, T_grid, leg_x):
         r"""Forward Fourier transformation for the spectral harmonics.
 
@@ -91,21 +107,18 @@ class TensorflowBackend(pyshqg.backend.abstract.Backend):
             Truncature of the data in spectral space.
         T_grid : int
             Truncature of the Gauss--Legendre grid.
-        leg_x : tensorflow.Tensor, shape (..., 2, Nlat, T+1)
+        leg_x : backend array, shape (..., 2, Nlat, T+1)
             Legendre transform of $\hat{x}$.
 
         Returns
         -------
-        x : tensorflow.Tensor, shape (..., Nlat, Nlon)
+        x : backend array, shape (..., Nlat, Nlon)
             Variable $x$ in grid space.
         """
-        leg_x = tf.dtypes.complex(leg_x[..., 0, :, :], -leg_x[..., 1, :, :])
-        rank = len(leg_x.shape)
-        paddings = [[0, 0] for _ in range(rank-1)] + [[0, T_grid+1-T]]
-        leg_x = tf.pad(leg_x, paddings, mode='CONSTANT', constant_values=0)
-        return tf.signal.irfft(leg_x) * (2*T_grid+2)
+        pass
 
     @staticmethod
+    @abc.abstractmethod
     def apply_ifft(T, T_grid, x):
         r"""Inverse Fourier transformation for the spectral harmonics.
 
@@ -121,14 +134,13 @@ class TensorflowBackend(pyshqg.backend.abstract.Backend):
             Truncature of the data in spectral space.
         T_grid : int
             Truncature of the Gauss--Legendre grid.
-        x : tensorflow.Tensor, shape (..., Nlat, Nlon)
+        x : backend array, shape (..., Nlat, Nlon)
             Variable $x$ in grid space.
 
         Returns
         -------
-        leg_x : tensorflow.Tensor, shape (..., 2, Nlat, T+1)
+        leg_x : backend array, shape (..., 2, Nlat, T+1)
             Legendre transform of $\hat{x}$.
         """
-        leg_x = tf.signal.rfft(x)[..., :T+1] / (2*T_grid+2)
-        return tf.stack([tf.math.real(leg_x), -tf.math.imag(leg_x)], axis=-3)
+        pass
 
