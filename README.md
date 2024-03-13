@@ -5,6 +5,7 @@
 
 [![Documentation Status](https://readthedocs.org/projects/pyshqg/badge/?version=latest)](https://pyshqg.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version](https://badge.fury.io/py/pyshqg.svg)](https://badge.fury.io/py/pyshqg)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10813504.svg)](https://doi.org/10.5281/zenodo.10813504)
 
 `pyshqg` is a python solver for the [Marshal and Molteni (1993) quasi-geostrophic (QG) model](https://doi.org/10.1175/1520-0469(1993)050%3C1792:TADUOP%3E2.0.CO;2).
 QG models express the conservation of potential vorticity over time and are

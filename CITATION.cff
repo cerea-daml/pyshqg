@@ -1,15 +1,23 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
-- family-names: "Farchi"
-  given-names: "Alban"
-  orcid: "https://orcid.org/0000-0002-4162-8289"
-- family-names: "Malartic"
-  given-names: "Quentin"
-- family-names: "Bocquet"
-  given-names: "Marc"
+- affiliation: "Ecole des Ponts ParisTech"
+  family-names: Farchi
+  given-names: Alban
+  orcid: 0000-0002-4162-8289
+- family-names: Malartic
+  given-names: Quentin
+  orcid: 0000-0001-7570-3219
+- affiliation: "Ecole des Ponts ParisTech"
+  family-names: Bocquet
+  given-names: Marc 
+  orcid: 0000-0003-2675-0347
+- affiliation: "Laboratoire de Météorologie Dynamique"
+  family-names: D'Andrea
+  given-names: Fabio
+  orcid: 0000-0002-6249-3168
 title: "The Python Spherical Harmonics Quasi-Geostrophic (pyshqg) model"
-version: 0.1.0
-doi: 
-date-released: 2023-12-04
-url:
+version: 1.0.1
+doi: 10.5281/zenodo.10813504
+date-released: 2024-03-13
+url: https://github.com/cerea-daml/pyshqg
