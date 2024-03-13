@@ -1,0 +1,7 @@
+sphinx
+sphinx-rtd-theme
+nbsphinx
+sphinx-gallery
+tomli
+m2r2
+ipython

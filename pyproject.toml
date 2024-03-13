@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyshqg"
+version = "1.0.1"
+description = "QG Model in spherical harmonics"
+license = {text = "MIT"}
+authors = [
+    {name = "Alban Farchi", email="alban.farchi@enpc.fr"},
+    {name = "Marc Bocquet", email="marc.bocquet@enpc.fr"},
+    {name = "Quentin Malartic", email="quentin.malartic@enpc.fr"},
+    {name = "Fabio D'Andrea", email="fabio.dandrea@lmd.ipsl.fr"},
+]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "pyshtools==4.10.4",
+    "xarray",
+    "zarr",
+    "tqdm",
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+]
+keywords = [
+    "quasi-geostrophic model",
+    "numerical modelling",
+    "atmosphere",
+    "spherical harmonics",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pyyaml",
+    "jupyterlab",
+    "ipywidgets",
+    "matplotlib",
+    "cartopy",
+    "cmocean",
+]
+doc = [
+    "sphinx",
+    "sphinx-rtd-theme",
+    "nbsphinx",
+    "sphinx-gallery",
+    "tomli",
+    "m2r2",
+    "ipython",
+]
+complete = ["pyshqg[dev,doc]"]
+
+[project.urls]
+Documentation = "https://pyshqg.readthedocs.io"
+Source = "https://github.com/cerea-daml/pyshqg"
+Issues = "https://github.com/cerea-daml/pyshqg/issues"
+
+[tool.setuptools]
+packages = ["pyshqg", "pyshqg.backend", "pyshqg.core", "pyshqg.preprocessing"]
+include-package-data = true
+

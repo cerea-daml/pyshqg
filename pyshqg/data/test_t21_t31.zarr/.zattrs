@@ -1,0 +1,59 @@
+{
+    "config": {
+        "abm_integration": {
+            "dt": 1800,
+            "method": "abm"
+        },
+        "data_interpolation": {
+            "forcing": "quintic",
+            "land_sea_mask": "quintic",
+            "orography": "quintic"
+        },
+        "dissipation": {
+            "ekman": {
+                "orography_scale": 1000.0,
+                "tau": 259200.0,
+                "weight_land_sea_mask": 0.5,
+                "weight_orography": 0.5
+            },
+            "selective": {
+                "tau": 8640.0
+            },
+            "thermal": {
+                "tau": 2160000.0
+            }
+        },
+        "ee_integration": {
+            "dt": 1800,
+            "method": "ee"
+        },
+        "poisson_solver": {
+            "orography_scale": 9000.0
+        },
+        "reference_data": {
+            "grid_truncature": 63,
+            "load": true,
+            "padding": true
+        },
+        "rk2_integration": {
+            "dt": 1800,
+            "method": "rk2"
+        },
+        "rk4_integration": {
+            "dt": 1800,
+            "method": "rk4"
+        },
+        "spectral_transformations": {
+            "T": 21,
+            "T_grid": 31,
+            "planet_omega": 7.292e-05,
+            "planet_radius": 6371000.0
+        },
+        "vertical_parametrisation": {
+            "rossby_radius_list": [
+                700000.0,
+                450000.0
+            ]
+        }
+    }
+}
