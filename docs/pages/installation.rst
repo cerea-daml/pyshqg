@@ -35,6 +35,13 @@ This will also install all the dependencies for the NumPy_-based variant.
 
     $ pip install pyshqg
 
+Alternatively, ``pyshqg`` is available on conda-forge and hence
+can be installed using ``conda`` or ``mamba``:
+
+.. code-block:: bash
+
+    $ conda install conda-forge::pyshqg
+
 For the TensorFlow-based variant
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

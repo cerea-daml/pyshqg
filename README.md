@@ -3,9 +3,11 @@
 
 # pyshqg
 
-[![Documentation Status](https://readthedocs.org/projects/pyshqg/badge/?version=latest)](https://pyshqg.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version](https://badge.fury.io/py/pyshqg.svg)](https://badge.fury.io/py/pyshqg)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10813504.svg)](https://zenodo.org/doi/10.5281/zenodo.10813503)
+[![Conda Version](https://img.shields.io/conda/vn/conda-forge/pyshqg.svg)](https://anaconda.org/conda-forge/pyshqg)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10813504.svg)](https://doi.org/10.5281/zenodo.10813504)
+[![Documentation Status](https://readthedocs.org/projects/pyshqg/badge/?version=latest)](https://pyshqg.readthedocs.io/en/latest/?badge=latest)
+
 
 `pyshqg` is a python solver for the [Marshal and Molteni (1993) quasi-geostrophic (QG) model](https://doi.org/10.1175/1520-0469(1993)050%3C1792:TADUOP%3E2.0.CO;2).
 QG models express the conservation of potential vorticity over time and are
@@ -19,9 +21,13 @@ because it encapsulates complex physical processes.
 
 ## Installation
 
-Install using pip:
+Install using `pip`:
 
     $ pip install pyshqg
+
+or using `conda` or `mamba`:
+
+    $ conda install conda-forge::pyshqg
 
 More details can be found on this [page](https://pyshqg.readthedocs.io/en/latest/pages/installation.html).
 
@@ -92,11 +98,9 @@ in Fortran written at LMD by XXX.
 
 ## Todo-list
 
-- make higher resolution gif animation
 - make more example notebooks (see list below)
 - fill in the documentation sections
 - fill in docstrings, in particular with the convention used in the docs
-- publish first version on pypi and conda-forge
 - write pytorch/jax backends
 - include unit tests in github CI
 - apply linting and include it in github CI
